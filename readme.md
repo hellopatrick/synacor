@@ -1,4 +1,6 @@
-[Synacor Challenge](https://challenge.synacor.com) in OCaml.
+[Synacor Challenge](https://challenge.synacor.com).
+
+My attempt at solving the Synacor Challenge.
 
 TODO:
 - Text adventure!
