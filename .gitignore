@@ -1,6 +1,5 @@
 _build/
-
+.merlin
+*.install
 *.bin
 *.txt
-
-.merlin

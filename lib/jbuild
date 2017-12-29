@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(library
+  (
+    (name synacor)
+    (public_name synacor)
+    (libraries (core))
+    (ocamlopt_flags (:standard -rectypes -inline 100 -ccopt -ffast-math -O3))
+  )
+)

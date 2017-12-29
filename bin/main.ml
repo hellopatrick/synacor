@@ -1,8 +1,7 @@
 open Core
+open Synacor
 
-open Vm
-
-let read_input () =
+let read_input file_name =
   let f channel =
     let rec aux l =
       let buf = Buffer.create 2 in
@@ -14,10 +13,10 @@ let read_input () =
       | None -> l
     in aux []
   in
-  In_channel.with_file ~binary:true ~f "./challenge.bin"
+  In_channel.with_file ~binary:true ~f file_name
   |> Array.of_list_rev
 
 let _ =
-  let instructions = read_input () in
-  let _res = Vm.(create instructions |> run) in
+  let instructions = read_input "./challenge.bin" in
+  let _res = VM.(create instructions |> run) in
   ()
