@@ -5,10 +5,17 @@ type t =
   | Set
   | Push
   | Pop
-  | Equal | GreaterThan
-  | Jump | JumpT | JumpF
-  | Add | Multiply | Mod
-  | And | Or | Not
+  | Equal 
+  | GreaterThan
+  | Jump
+  | JumpTrue
+  | JumpFalse
+  | Add
+  | Multiply
+  | Mod
+  | And
+  | Or
+  | Not
   | Read
   | Write
   | Call
@@ -16,54 +23,28 @@ type t =
   | Out
   | In
   | Noop
-  | Unknown of int
 
 let of_int = function
-  | 0 -> Halt
-  | 1 -> Set
-  | 2 -> Push
-  | 3 -> Pop
-  | 4 -> Equal
-  | 5 -> GreaterThan
-  | 6 -> Jump
-  | 7 -> JumpT
-  | 8 -> JumpF
-  | 9 -> Add
-  | 10 -> Multiply
-  | 11 -> Mod
-  | 12 -> And
-  | 13 -> Or
-  | 14 -> Not
-  | 15 -> Read
-  | 16 -> Write
-  | 17 -> Call
-  | 18 -> Return
-  | 19 -> Out
-  | 20 -> In
-  | 21 -> Noop
-  | c -> Unknown c
-
-let arity = function
-  | Noop -> 0
-  | Set -> 2
-  | Push -> 1
-  | Pop -> 1
-  | Equal -> 3
-  | GreaterThan -> 3
-  | Jump -> 1
-  | JumpT -> 2
-  | JumpF -> 2
-  | Add -> 3
-  | Multiply -> 3
-  | Mod -> 3
-  | And -> 3
-  | Or -> 3
-  | Not -> 2
-  | Halt -> 0
-  | Read -> 2
-  | Write -> 2
-  | Call -> 1
-  | Return -> 0
-  | Out -> 1
-  | In -> 1
-  | Unknown c -> 0
+  | 0 -> Some Halt
+  | 1 -> Some Set
+  | 2 -> Some Push
+  | 3 -> Some Pop
+  | 4 -> Some Equal
+  | 5 -> Some GreaterThan
+  | 6 -> Some Jump
+  | 7 -> Some JumpTrue
+  | 8 -> Some JumpFalse
+  | 9 -> Some Add
+  | 10 -> Some Multiply
+  | 11 -> Some Mod
+  | 12 -> Some And
+  | 13 -> Some Or
+  | 14 -> Some Not
+  | 15 -> Some Read
+  | 16 -> Some Write
+  | 17 -> Some Call
+  | 18 -> Some Return
+  | 19 -> Some Out
+  | 20 -> Some In
+  | 21 -> Some Noop
+  | _ -> None
