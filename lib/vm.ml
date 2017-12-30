@@ -8,14 +8,15 @@ type t = {
   memory: Memory.t;
   pc: int;
   stack: int list;
-  input_buffer: char list option;
+  input_buffer: char list;
+  output_buffer: char list;
   state: state;
   debug: bool;
 }
 
 let create program =
   let memory = Memory.create_and_load program in
-  { memory; pc=0; stack=[]; input_buffer=None; state=Run; debug=false; }
+  { memory; pc=0; stack=[]; input_buffer=[]; output_buffer=[]; state=Run; debug=false; }
 
 let noop t =
   if t.debug then printf "noop\n";
@@ -137,33 +138,42 @@ let handle_output t =
   let cc = Memory.read t.memory (t.pc + 1) in
   let letter = Char.of_int_exn cc in
 
-  if t.debug then printf "output %d (from %d)\n" cc (t.pc + 1)
-  else printf "%c" letter;
-
-  { t with pc=(t.pc + 2); }
+  let output_buffer = letter::t.output_buffer in
+  { t with pc=(t.pc + 2); output_buffer; }
 
 let rec read_stdin t =
-  printf ">>> "; Out_channel.flush Out_channel.stdout;
+  printf ";; "; Out_channel.(flush stdout);
 
-  match In_channel.input_line In_channel.stdin with
+  match In_channel.(input_line stdin) with
   | None -> read_stdin t
+  | Some "quit" -> exit 0
   | Some "debug" -> read_stdin { t with debug=(not t.debug); }
+  | Some "save_check" ->
+    let memory = t.memory in
+    let sexp = Memory.sexp_of_t memory in
+    let f c = Sexp.output c sexp in
+    let _ = Out_channel.with_file "./dump.txt" ~f in
+    t
+  | Some "load_check" ->
+    let sexp = Sexp.load_sexp "./dump.txt" in
+    let memory = Memory.t_of_sexp sexp in
+    { t with memory; }
   | Some line ->
-    let input_buffer = String.to_list (line ^ "\n") |> Option.some in
+    let input_buffer = String.to_list (line ^ "\n") in
     { t with input_buffer; }
 
 let handle_input t =
+  if not (List.is_empty t.output_buffer) then
+    printf "%s" (String.of_char_list (List.rev t.output_buffer));
+  let t = { t with output_buffer=[]; } in
   match t.input_buffer with
-  | None ->
+  | [] ->
     read_stdin t
-  | Some [] ->
-    { t with input_buffer=None; }
-  | Some (c::rest) ->
+  | c::input_buffer ->
     let ascii = Char.to_int c in
     let a = Memory.get t.memory (t.pc + 1) in
     Memory.set t.memory a ascii;
-    if t.debug then printf "input %d to %d\n" ascii a;
-    { t with input_buffer=Some rest; pc=(t.pc + 2);}
+    { t with input_buffer; pc=(t.pc + 2); }
 
 let halt t =
   if t.debug then printf "halt.\n";
@@ -207,7 +217,7 @@ let exec t =
 
 let run t =
   let rec step t =
-    Out_channel.flush Out_channel.stdout;
+    Out_channel.(flush stdout);
     match t.state with
     | Halt -> t
     | Run -> let t = exec t in step t

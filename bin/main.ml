@@ -3,7 +3,6 @@ open Synacor
 
 let read_input file_name =
   let f channel =
-    printf "%d\n" (Int.of_int64_exn (In_channel.length channel));
     let buf = Buffer.create 2 in
     let rec aux l =
       match In_channel.input_buffer channel buf ~len:2 with

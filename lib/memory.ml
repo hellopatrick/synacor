@@ -4,6 +4,7 @@ type t = {
   registers:int array;
   memory:int array;
 }
+[@@deriving sexp]
 
 let max_mem = 32768
 
