@@ -7,7 +7,7 @@ let read_input file_name =
     let rec aux l =
       match In_channel.input_buffer channel buf ~len:2 with
       | Some _ ->
-        let contents = Buffer.contents buf in
+        let contents = Buffer.to_bytes buf in
         let code = Binary_packing.unpack_unsigned_16_little_endian ~buf:contents ~pos:0 in
         Buffer.reset buf;
         aux (code::l)
