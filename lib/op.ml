@@ -5,7 +5,7 @@ type t =
   | Set
   | Push
   | Pop
-  | Equal 
+  | Equal
   | GreaterThan
   | Jump
   | JumpTrue
@@ -47,4 +47,6 @@ let of_int = function
   | 19 -> Some Out
   | 20 -> Some In
   | 21 -> Some Noop
-  | _ -> None
+  | unk_op ->
+    printf "Op code: %02d not implemented" unk_op;
+    None

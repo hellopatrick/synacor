@@ -29,4 +29,10 @@ let set t addr value =
   else Array.set t.memory addr value
 
 let print t i =
-  printf "i: %d -> v: %d \n" i (value t i);
+  printf "i: %d -> v: %d \n" i (value t i)
+
+let print_registers t =
+  List.to_string ~f:Int.to_string (Array.to_list t.registers)
+  |> printf "Registers: %s\n";
+  List.to_string ~f:Int.to_string (Array.to_list (Array.map ~f:(get t) t.registers))
+  |> printf "Values: %s\n";
