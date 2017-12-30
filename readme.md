@@ -10,7 +10,6 @@ Custom Commands:
 - `debug`: prints out all vm instructions.
 - `save_check`: saves current memory to `./dump.txt`.
 - `load_check`: loads `./dump.txt` as current memory state.
--
 
 TODO:
 - Add support for named save/load checkpoints.
