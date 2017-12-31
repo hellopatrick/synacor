@@ -24,34 +24,34 @@ let noop t =
 
 let jump t =
   let pc = Memory.read t.memory (t.pc + 1) in
-  if t.debug then printf "jump to %d\n" pc;
+  if t.debug then printf "jump to %x\n" pc;
   { t with pc; }
 
 let jump_if_true t =
   let a = Memory.read t.memory (t.pc + 1)
   and b = Memory.read t.memory (t.pc + 2) in
-  let pc = if a > 0 then b else t.pc + 3 in
-  if t.debug then printf "jump_if_true %d to %d\n" a b;
-  { t with pc; }
+  let loc = if a > 0 then b else t.pc + 3 in
+  if t.debug then printf "jump_if_true %x to %x\n" a b;
+  { t with pc=loc; }
 
 let jump_if_false t =
   let a = Memory.read t.memory (t.pc + 1)
   and b = Memory.read t.memory (t.pc + 2) in
-  let pc = if a = 0 then b else t.pc + 3 in
-  if t.debug then printf "jump_if_false %d to %d\n" a b;
-  { t with pc; }
+  let loc = if a = 0 then b else t.pc + 3 in
+  if t.debug then printf "jump_if_false %x to %x\n" a b;
+  { t with pc=loc; }
 
 let set t =
   let a = Memory.get t.memory (t.pc + 1)
   and b = Memory.read t.memory (t.pc + 2) in
   Memory.set t.memory a b;
-  if t.debug then printf "set %d to %d\n" a b;
+  if t.debug then printf "set %x to %x\n" a b;
   { t with pc=(t.pc + 3); }
 
 let push t =
   let v = Memory.read t.memory (t.pc + 1) in
   let stack = v::t.stack in
-  if t.debug then printf "push %d to stack\n" v;
+  if t.debug then printf "push %x to stack\n" v;
   { t with stack; pc=(t.pc + 2); }
 
 let pop t =
@@ -60,7 +60,7 @@ let pop t =
   | [] -> failwith "stack is empty;"
   | v::stack ->
     Memory.set t.memory a v;
-    if t.debug then printf "pop %d from stack to %d\n" v a;
+    if t.debug then printf "pop %x from stack to %x\n" v a;
     { t with stack; pc=(t.pc + 2); }
 
 let compute_and_set t f name =
@@ -68,7 +68,7 @@ let compute_and_set t f name =
   and b = Memory.read t.memory (t.pc + 2)
   and c = Memory.read t.memory (t.pc + 3) in
   let v = (f b c) % max_u15 in
-  if t.debug then printf "set %d to (%s %d %d) = %d\n" a name b c v;
+  if t.debug then printf "set %x to (%s %x %x) -> %x\n" a name b c v;
   Memory.set t.memory a v
 
 let eq t =
@@ -104,35 +104,35 @@ let bit_not t =
   and b = Memory.read t.memory (t.pc + 2) in
   let v = ((lnot b) land 65535) % 32768 in
   Memory.set t.memory a v;
-  if t.debug then printf "set %d to not %d = %d\n" a b v;
+  if t.debug then printf "set %x to not %x -> %x\n" a b v;
   { t with pc=(t.pc + 3); }
 
 let rmem t =
   let a = Memory.get t.memory (t.pc + 1)
   and b = Memory.read t.memory (t.pc + 2) |> Memory.get t.memory in
   Memory.set t.memory a b;
-  if t.debug then printf "rmem %d to %d\n" b a;
+  if t.debug then printf "rmem %x to %x\n" b a;
   { t with pc=(t.pc + 3); }
 
 let wmem t =
   let a = Memory.read t.memory (t.pc + 1)
   and b = Memory.read t.memory (t.pc + 2) in
   Memory.set t.memory a b;
-  if t.debug then printf "wmem %d to %d\n" b a;
+  if t.debug then printf "wmem %x to %x\n" b a;
   { t with pc=(t.pc + 3); }
 
 let call t =
   let pc = Memory.read t.memory (t.pc + 1) in
-  let stack = (t.pc + 2)::t.stack in
-  if t.debug then printf "call %d\n" pc;
-  { t with stack=stack; pc; }
+  let new_stack = (t.pc + 2)::t.stack in
+  if t.debug then printf "call %x\n" pc;
+  { t with stack=new_stack; pc; }
 
 let ret t =
   match t.stack with
   | [] -> { t with state=Halt; }
-  | pc::stack ->
-    if t.debug then printf "return to %d\n" pc;
-    { t with stack; pc; }
+  | pc::tail ->
+    if t.debug then printf "return to %x\n" pc;
+    { t with stack=tail; pc; }
 
 let handle_output t =
   let cc = Memory.read t.memory (t.pc + 1) in
@@ -152,12 +152,15 @@ let rec read_stdin t =
     let memory = t.memory in
     let sexp = Memory.sexp_of_t memory in
     let f c = Sexp.output c sexp in
-    let _ = Out_channel.with_file "./dump.txt" ~f in
+    Out_channel.with_file "./dump.txt" ~f;
     t
   | Some "load_check" ->
     let sexp = Sexp.load_sexp "./dump.txt" in
-    let memory = Memory.t_of_sexp sexp in
-    { t with memory; }
+    let checkpoint = Memory.t_of_sexp sexp in
+    { t with memory=checkpoint; }
+  | Some "hack_teleporter" ->
+    Memory.set t.memory 32775 1;
+    t
   | Some line ->
     let input_buffer = String.to_list (line ^ "\n") in
     { t with input_buffer; }
@@ -213,7 +216,9 @@ let next_op t =
 let exec t =
   match next_op t with
   | None -> { t with state=Halt; }
-  | Some op -> perform t op
+  | Some op ->
+    if t.debug then printf "%x: " t.pc;
+    perform t op
 
 let run t =
   let rec step t =
